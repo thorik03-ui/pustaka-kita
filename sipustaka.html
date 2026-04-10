@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SiPustaka — Sistem Informasi Perpustakaan</title>
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --cream:    #FAF6EF;
+      --brown:    #3B2A1A;
+      --gold:     #C9962C;
+      --gold-lt:  #E8BC5C;
+      --rust:     #A0522D;
+      --green:    #2D6A4F;
+      --red:      #B5373A;
+      --card-bg:  #FFFDF8;
+      --border:   #E8DFD0;
+      --shadow:   0 4px 24px rgba(59,42,26,.10);
+      --radius:   14px;
+      --font-head:'Playfair Display', serif;
+      --font-body:'DM Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; font-family: var(--font-body); background: var(--cream); color: var(--brown); }
+
+    /* PAGE SYSTEM */
+    .page { position: fixed; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transform: translateY(16px); transition: opacity .32s ease, transform .32s ease; overflow: hidden; }
+    .page.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+    /* LOGIN */
+    #page-login {
+      background:
+        radial-gradient(ellipse 60% 50% at 80% 20%, rgba(201,150,44,.18) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 60% at 10% 80%, rgba(160,82,45,.12) 0%, transparent 70%),
+        var(--cream);
+      align-items: center; justify-content: center; padding: 2rem;
+    }
+    .login-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 24px; padding: 3rem 2.5rem; max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(59,42,26,.14); position: relative; overflow: hidden; }
+    .login-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, var(--gold), var(--rust)); }
+    .login-logo { width: 64px; height: 64px; background: linear-gradient(135deg, var(--gold), var(--rust)); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: 0 8px 24px rgba(201,150,44,.30); }
+    .login-logo i { font-size: 1.8rem; color: #fff; }
+    .login-title { text-align: center; font-family: var(--font-head); font-size: 2rem; font-weight: 900; color: var(--brown); margin-bottom: .25rem; }
+    .login-sub { text-align: center; color: #9a8070; font-size: .9rem; margin-bottom: 2rem; }
+    .form-label { font-weight: 600; font-size: .85rem; letter-spacing: .04em; color: var(--brown); display: block; margin-bottom: .4rem; }
+    .form-control { border: 1.5px solid var(--border); border-radius: 10px; padding: .75rem 1rem; font-family: var(--font-body); font-size: .95rem; background: var(--cream); color: var(--brown); width: 100%; transition: border-color .2s, box-shadow .2s; }
+    .form-control:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,150,44,.15); background: #fff; }
+    .btn-login { width: 100%; background: linear-gradient(135deg, var(--gold), var(--rust)); border: none; border-radius: 10px; padding: .85rem; color: #fff; font-weight: 600; font-size: 1rem; font-family: var(--font-body); cursor: pointer; transition: opacity .2s, transform .15s; margin-top: .5rem; }
+    .btn-login:hover { opacity: .9; transform: translateY(-1px); }
+    .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+    .error-msg { color: var(--red); font-size: .82rem; margin-top: .4rem; display: none; }
+
+    /* NAVBAR */
+    .app-navbar { background: var(--brown); padding: .9rem 2rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; box-shadow: 0 2px 12px rgba(0,0,0,.25); z-index: 10; }
+    .navbar-brand-custom { display: flex; align-items: center; gap: .75rem; }
+    .brand-icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--gold), var(--gold-lt)); border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+    .brand-icon i { color: var(--brown); font-size: 1.1rem; }
+    .navbar-brand-custom span { font-family: var(--font-head); font-size: 1.35rem; color: #fff; font-weight: 700; }
+    .navbar-user { display: flex; align-items: center; gap: .75rem; }
+    .user-badge { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; padding: .35rem .85rem; color: #fff; font-size: .85rem; display: flex; align-items: center; gap: .5rem; }
+    .user-badge .nis { color: var(--gold-lt); font-weight: 600; }
+    .btn-logout { background: transparent; border: 1.5px solid rgba(255,255,255,.3); border-radius: 8px; padding: .4rem .9rem; color: #fff; font-size: .82rem; font-family: var(--font-body); cursor: pointer; transition: background .2s; }
+    .btn-logout:hover { background: rgba(255,255,255,.1); }
+
+    /* PAGE BODY */
+    .page-body { flex: 1; overflow-y: auto; padding: 2rem; }
+    .inner { max-width: 1100px; margin: 0 auto; }
+
+    /* DASHBOARD */
+    .dash-welcome { margin-bottom: 1.75rem; }
+    .dash-welcome h2 { font-family: var(--font-head); font-size: 1.8rem; color: var(--brown); }
+    .dash-welcome p { color: #9a8070; font-size: .95rem; margin-top: .25rem; }
+    .text-gold { color: var(--gold); }
+    .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.75rem; }
+    @media(max-width:600px) { .menu-grid { grid-template-columns: 1fr; } }
+    .menu-card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 2rem 1.75rem; cursor: pointer; transition: transform .2s, box-shadow .2s, border-color .2s; display: flex; flex-direction: column; gap: .75rem; position: relative; overflow: hidden; }
+    .menu-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--gold), var(--rust)); transform: scaleX(0); transition: transform .25s; }
+    .menu-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--gold); }
+    .menu-card:hover::after { transform: scaleX(1); }
+    .menu-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+    .menu-icon.borrow { background: rgba(201,150,44,.15); color: var(--gold); }
+    .menu-icon.return  { background: rgba(45,106,79,.12);  color: var(--green); }
+    .menu-card h4 { font-family: var(--font-head); font-size: 1.2rem; margin: 0; }
+    .menu-card p  { color: #9a8070; font-size: .88rem; margin: 0; }
+
+    /* PANEL */
+    .panel { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    .panel-header { padding: 1.1rem 1.75rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .panel-header h5 { margin: 0; font-family: var(--font-head); font-size: 1.1rem; }
+    .panel-body { padding: 1.75rem; }
+    .btn-back { background: transparent; border: 1.5px solid var(--border); border-radius: 8px; padding: .35rem .85rem; font-size: .82rem; font-family: var(--font-body); color: var(--brown); cursor: pointer; transition: background .2s; display: flex; align-items: center; gap: .4rem; }
+    .btn-back:hover { background: var(--border); }
+
+    /* TABLE */
+    .book-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    .book-table th { background: var(--brown); color: #fff; padding: .75rem 1rem; text-align: left; font-weight: 600; font-size: .82rem; letter-spacing: .04em; }
+    .book-table th:first-child { border-radius: 8px 0 0 8px; }
+    .book-table th:last-child  { border-radius: 0 8px 8px 0; }
+    .book-table td { padding: .85rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .book-table tr:last-child td { border-bottom: none; }
+    .book-table tr:hover td { background: rgba(201,150,44,.05); }
+
+    .stock-badge { display: inline-block; padding: .25rem .65rem; border-radius: 20px; font-size: .78rem; font-weight: 600; }
+    .stock-badge.ok    { background: rgba(45,106,79,.12); color: var(--green); }
+    .stock-badge.empty { background: rgba(181,55,58,.10); color: var(--red);   }
+    .stock-badge.late  { background: rgba(181,55,58,.10); color: var(--red);   }
+
+    .btn-pinjam { background: linear-gradient(135deg, var(--gold), var(--rust)); border: none; border-radius: 7px; padding: .4rem .95rem; color: #fff; font-size: .82rem; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: opacity .2s; }
+    .btn-pinjam:hover { opacity: .85; }
+    .btn-pinjam:disabled { background: #ccc; cursor: not-allowed; opacity: 1; }
+
+    /* RETURN */
+    .return-form { max-width: 540px; }
+    .input-row   { display: flex; gap: .75rem; margin-bottom: 1rem; }
+    .btn-cari { background: linear-gradient(135deg, var(--green), #1a4535); border: none; border-radius: 10px; padding: .75rem 1.5rem; color: #fff; font-weight: 600; font-size: .92rem; font-family: var(--font-body); cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: opacity .2s; }
+    .btn-cari:hover { opacity: .88; }
+    .result-card { border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; border: 1.5px solid var(--border); display: none; }
+    .result-card.show { display: block; }
+    .result-card.fine { border-color: rgba(181,55,58,.4); background: rgba(181,55,58,.05); }
+    .result-card.good { border-color: rgba(45,106,79,.4);  background: rgba(45,106,79,.05);  }
+    .result-row { display: flex; justify-content: space-between; padding: .5rem 0; border-bottom: 1px solid var(--border); font-size: .9rem; }
+    .result-row:last-child { border-bottom: none; }
+    .result-label { color: #9a8070; }
+    .result-value { font-weight: 600; }
+    .fine-amount { font-size: 1.3rem; color: var(--red);   font-weight: 700; font-family: var(--font-head); }
+    .no-fine     { font-size: 1.1rem; color: var(--green); font-weight: 700; }
+    .btn-konfirmasi { width: 100%; margin-top: 1.25rem; background: linear-gradient(135deg, var(--green), #1a4535); border: none; border-radius: 10px; padding: .8rem; color: #fff; font-weight: 600; font-size: .95rem; font-family: var(--font-body); cursor: pointer; transition: opacity .2s; }
+    .btn-konfirmasi:hover { opacity: .88; }
+
+    /* EMPTY */
+    .empty-state { text-align: center; padding: 3rem 1rem; color: #b0a090; }
+    .empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(59,42,26,.55); z-index: 999; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal-box { background: var(--card-bg); border-radius: 18px; padding: 2rem; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,.25); animation: mIn .25s ease; }
+    @keyframes mIn { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+    .modal-box h5 { font-family: var(--font-head); font-size: 1.25rem; margin-bottom: .5rem; }
+    .modal-info { background: var(--cream); border-radius: 10px; padding: 1rem; margin: 1rem 0; font-size: .9rem; }
+    .modal-info .bk  { font-weight: 700; font-size: 1rem; margin-bottom: .35rem; }
+    .modal-info span { color: #9a8070; font-size: .82rem; }
+    .modal-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1rem; }
+    .btn-cancel  { background: var(--border); border: none; border-radius: 9px; padding: .6rem 1.25rem; font-family: var(--font-body); font-weight: 600; cursor: pointer; }
+    .btn-confirm { background: linear-gradient(135deg, var(--gold), var(--rust)); border: none; border-radius: 9px; padding: .6rem 1.5rem; color: #fff; font-family: var(--font-body); font-weight: 600; cursor: pointer; }
+
+    /* TOAST */
+    #toast-wrap { position: fixed; top: 1.25rem; right: 1.25rem; z-index: 9999; display: flex; flex-direction: column; gap: .5rem; }
+    .toast-item { min-width: 280px; background: var(--brown); color: #fff; padding: .85rem 1.25rem; border-radius: 10px; font-size: .88rem; display: flex; align-items: center; gap: .65rem; box-shadow: 0 8px 24px rgba(0,0,0,.25); animation: tIn .3s ease forwards; }
+    .toast-item.success { border-left: 4px solid var(--green); }
+    .toast-item.error   { border-left: 4px solid var(--red);   }
+    .toast-item.info    { border-left: 4px solid var(--gold);  }
+    .toast-item.out     { animation: tOut .3s ease forwards;   }
+    @keyframes tIn  { from{opacity:0;transform:translateX(50px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes tOut { from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(50px)} }
+  </style>
+</head>
+<body>
+
+<div id="toast-wrap"></div>
+
+<!-- MODAL KONFIRMASI PINJAM -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal-box">
+    <h5><i class="fas fa-book-open" style="color:var(--gold);margin-right:.5rem;"></i>Konfirmasi Peminjaman</h5>
+    <p style="color:#9a8070;font-size:.88rem;">Apakah kamu yakin ingin meminjam buku ini?</p>
+    <div class="modal-info">
+      <div class="bk" id="m-judul">—</div>
+      <span id="m-kode">—</span><br>
+      <span id="m-tanggal">—</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="tutupModal()">Batal</button>
+      <button class="btn-confirm" onclick="konfirmasiPinjam()">Ya, Pinjam</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 1: LOGIN -->
+<div id="page-login" class="page active">
+  <div class="login-card">
+    <div class="login-logo"><i class="fas fa-book-open"></i></div>
+    <div class="login-title">SiPustaka</div>
+    <p class="login-sub">Sistem Informasi Peminjaman Buku Sekolah</p>
+    <div style="margin-bottom:1rem;">
+      <label class="form-label" for="inp-nis">NOMOR INDUK SISWA (NIS)</label>
+      <input id="inp-nis" class="form-control" type="text"
+        placeholder="Masukkan NIS kamu…" maxlength="10"
+        onkeydown="if(event.key==='Enter') doLogin()" />
+      <div id="login-err" class="error-msg"></div>
+    </div>
+    <button class="btn-login" onclick="doLogin()">
+      <i class="fas fa-sign-in-alt" style="margin-right:.5rem;"></i>Masuk
+    </button>
+    <div class="divider"></div>
+    <p style="text-align:center;font-size:.78rem;color:#b0a090;">
+      Masukkan NIS sesuai data pendaftaran · Contoh: <strong>10461</strong>
+    </p>
+  </div>
+</div>
+
+<!-- PAGE 2: DASHBOARD -->
+<div id="page-dashboard" class="page">
+  <nav class="app-navbar">
+    <div class="navbar-brand-custom">
+      <div class="brand-icon"><i class="fas fa-book-open"></i></div>
+      <span>SiPustaka</span>
+    </div>
+    <div class="navbar-user">
+      <div class="user-badge">
+        <i class="fas fa-user-circle"></i>
+        <span id="nb-nama">—</span>&nbsp;·&nbsp;
+        <span class="nis" id="nb-nis">—</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">
+        <i class="fas fa-sign-out-alt" style="margin-right:.3rem;"></i>Keluar
+      </button>
+    </div>
+  </nav>
+  <div class="page-body">
+    <div class="inner">
+      <div class="dash-welcome">
+        <h2>Selamat datang, <span id="dash-nama" class="text-gold">—</span> 👋</h2>
+        <p>Silakan pilih menu di bawah ini untuk memulai.</p>
+      </div>
+      <div class="menu-grid">
+        <div class="menu-card" onclick="bukaPinjam()">
+          <div class="menu-icon borrow"><i class="fas fa-hand-holding-heart"></i></div>
+          <h4>Meminjam Buku</h4>
+          <p>Lihat katalog buku dan ajukan peminjaman</p>
+        </div>
+        <div class="menu-card" onclick="bukaKembali()">
+          <div class="menu-icon return"><i class="fas fa-undo-alt"></i></div>
+          <h4>Mengembalikan Buku</h4>
+          <p>Kembalikan buku dan cek denda keterlambatan</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h5><i class="fas fa-list-ul" style="color:var(--gold);margin-right:.5rem;"></i>Peminjaman Aktif Saya</h5>
+        </div>
+        <div class="panel-body" id="aktif-wrap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: MEMINJAM -->
+<div id="page-pinjam" class="page">
+  <nav class="app-navbar">
+    <div class="navbar-brand-custom">
+      <div class="brand-icon"><i class="fas fa-book-open"></i></div>
+      <span>SiPustaka</span>
+    </div>
+    <div class="navbar-user">
+      <div class="user-badge">
+        <i class="fas fa-user-circle"></i>
+        <span id="np-nama">—</span>&nbsp;·&nbsp;
+        <span class="nis" id="np-nis">—</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">
+        <i class="fas fa-sign-out-alt" style="margin-right:.3rem;"></i>Keluar
+      </button>
+    </div>
+  </nav>
+  <div class="page-body">
+    <div class="inner">
+      <div class="panel">
+        <div class="panel-header">
+          <h5><i class="fas fa-hand-holding-heart" style="color:var(--gold);margin-right:.5rem;"></i>Daftar Buku Tersedia</h5>
+          <button class="btn-back" onclick="kembaliDash()"><i class="fas fa-arrow-left"></i> Kembali</button>
+        </div>
+        <div class="panel-body" style="overflow-x:auto;">
+          <table class="book-table">
+            <thead>
+              <tr><th>Kode Buku</th><th>Judul Buku</th><th>Stok</th><th>Aksi</th></tr>
+            </thead>
+            <tbody id="tbody-buku"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4: MENGEMBALIKAN -->
+<div id="page-kembali" class="page">
+  <nav class="app-navbar">
+    <div class="navbar-brand-custom">
+      <div class="brand-icon"><i class="fas fa-book-open"></i></div>
+      <span>SiPustaka</span>
+    </div>
+    <div class="navbar-user">
+      <div class="user-badge">
+        <i class="fas fa-user-circle"></i>
+        <span id="nk-nama">—</span>&nbsp;·&nbsp;
+        <span class="nis" id="nk-nis">—</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">
+        <i class="fas fa-sign-out-alt" style="margin-right:.3rem;"></i>Keluar
+      </button>
+    </div>
+  </nav>
+  <div class="page-body">
+    <div class="inner">
+      <div class="panel">
+        <div class="panel-header">
+          <h5><i class="fas fa-undo-alt" style="color:var(--gold);margin-right:.5rem;"></i>Pengembalian Buku</h5>
+          <button class="btn-back" onclick="kembaliDash()"><i class="fas fa-arrow-left"></i> Kembali</button>
+        </div>
+        <div class="panel-body">
+          <div class="return-form">
+            <label class="form-label" for="inp-kode">KODE BUKU</label>
+            <div class="input-row">
+              <input id="inp-kode" class="form-control" type="text"
+                placeholder="Contoh: BK001"
+                onkeydown="if(event.key==='Enter') cariPeminjaman()" />
+              <button class="btn-cari" onclick="cariPeminjaman()">
+                <i class="fas fa-search" style="margin-right:.3rem;"></i>Cari
+              </button>
+            </div>
+            <div id="result-card" class="result-card">
+              <div class="result-row"><span class="result-label">Nama Siswa</span><span class="result-value" id="r-nama">—</span></div>
+              <div class="result-row"><span class="result-label">NIS</span><span class="result-value" id="r-nis">—</span></div>
+              <div class="result-row"><span class="result-label">Judul Buku</span><span class="result-value" id="r-judul">—</span></div>
+              <div class="result-row"><span class="result-label">Tanggal Pinjam</span><span class="result-value" id="r-tgl-pinjam">—</span></div>
+              <div class="result-row"><span class="result-label">Batas Kembali</span><span class="result-value" id="r-tgl-batas">—</span></div>
+              <div class="result-row"><span class="result-label">Tanggal Dikembalikan</span><span class="result-value" id="r-tgl-aktual">—</span></div>
+              <div class="result-row"><span class="result-label">Keterlambatan</span><span class="result-value" id="r-terlambat">—</span></div>
+              <div class="result-row" style="margin-top:.5rem;padding-top:.75rem;border-top:2px solid var(--border);">
+                <span class="result-label" style="font-weight:700;">Total Denda</span>
+                <span class="result-value" id="r-denda">—</span>
+              </div>
+              <button class="btn-konfirmasi" onclick="konfirmasiKembali()">
+                <i class="fas fa-check-circle" style="margin-right:.5rem;"></i>Konfirmasi Pengembalian
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ================================================================
+   DATA SISWA — 36 siswa dari Daftar Nama CMB (sesuai foto)
+================================================================ */
+const SISWA = [
+  { nis: '10461', nama: 'Adinda Shabrina Ghaisani'       },
+  { nis: '10469', nama: 'Ahmad Zaki Nur Fitriadi'        },
+  { nis: '10475', nama: 'Alfaizza Shafarani'             },
+  { nis: '10488', nama: 'Amalina Huril Ain'              },
+  { nis: '10501', nama: 'Artika Althaaf Oktavia'         },
+  { nis: '10520', nama: 'Azzah Maiza Tsabita'            },
+  { nis: '10524', nama: 'Bayu Diza Afif Pratama'         },
+  { nis: '10525', nama: 'Beauty Kasacima Raya'           },
+  { nis: '10543', nama: 'Desfita Amira Tungga Dewi'      },
+  { nis: '10551', nama: 'Diana Larasati Puspita Ningrum' },
+  { nis: '10562', nama: 'Duta Urban Harum'               },
+  { nis: '10565', nama: 'Dyah Palupi Kusumaningrum'      },
+  { nis: '10576', nama: 'Evelyna Zazkia Rakhma'          },
+  { nis: '10588', nama: 'Fatur Rohman'                   },
+  { nis: '10600', nama: "Hafiyatun Ni'mah"               },
+  { nis: '10613', nama: 'Ida Sherlya Yuanita'            },
+  { nis: '10615', nama: 'Ihsan Kamil Alfahd'             },
+  { nis: '10624', nama: 'Izziany Riskia Ramadani'        },
+  { nis: '10632', nama: 'Kevin Cahya Ardyanta'           },
+  { nis: '10636', nama: 'Khansa Emma Kinasih'            },
+  { nis: '10651', nama: 'Malihatun Nisa'                 },
+  { nis: '10670', nama: 'Muhammad Arfa Abdullah'         },
+  { nis: '10677', nama: 'Muhammad Qyanu Athaya Kamil'    },
+  { nis: '10684', nama: 'Nabila Alfha Ufairah'           },
+  { nis: '10694', nama: 'Najla Audra Awaliyah'           },
+  { nis: '10700', nama: 'Nathan Huda Assidqi'            },
+  { nis: '10718', nama: 'Putri Aulia Zahra'              },
+  { nis: '10731', nama: 'Riska Zahrotus Zamaniyah'       },
+  { nis: '10745', nama: 'Sagita Aulia Rizki Saputri'     },
+  { nis: '10756', nama: 'Sheza Zazkiya Safaraeni'        },
+  { nis: '10766', nama: "Syafa'ati Tri Utami"            },
+  { nis: '10777', nama: "Thorikhul Huda Assya'bani"      },
+  { nis: '10778', nama: 'Tiara Larasati'                 },
+  { nis: '10787', nama: 'Vindi Setyaningsih'             },
+  { nis: '10797', nama: 'Zahra Kamilah Zein'             },
+  { nis: '10803', nama: 'Zefanya Andrea Wardani'         },
+];
+
+/* ================================================================
+   DATA BUKU — koleksi perpustakaan (in-memory, reset per session)
+================================================================ */
+const state = {
+  buku: [
+    { kode_buku: 'BK001', judul: 'Laskar Pelangi',            stok: 3 },
+    { kode_buku: 'BK002', judul: 'Bumi Manusia',              stok: 2 },
+    { kode_buku: 'BK003', judul: 'Sang Pemimpi',              stok: 4 },
+    { kode_buku: 'BK004', judul: 'Negeri 5 Menara',           stok: 2 },
+    { kode_buku: 'BK005', judul: 'Perahu Kertas',             stok: 0 },
+    { kode_buku: 'BK006', judul: 'Ayat-Ayat Cinta',           stok: 1 },
+    { kode_buku: 'BK007', judul: 'Dilan: Dia Adalah Dilanku', stok: 3 },
+    { kode_buku: 'BK008', judul: 'Pulang — Tere Liye',        stok: 2 },
+  ],
+  peminjaman: [],  // { id, nis, kode_buku, tgl_pinjam, tgl_kembali, tgl_aktual }
+};
+
+/* ================================================================
+   HELPERS
+================================================================ */
+const BULAN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const fmt        = s  => { const d=new Date(s); return `${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`; };
+const tambahHari = (s,n) => { const d=new Date(s); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; };
+const selisih    = (a,b) => Math.floor((new Date(b)-new Date(a))/864e5);
+const today      = ()    => new Date().toISOString().split('T')[0];
+const genId      = ()    => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const rp         = n     => 'Rp '+n.toLocaleString('id-ID');
+
+const findSiswa     = nis  => SISWA.find(s => s.nis === nis);
+const findBuku      = kode => state.buku.find(b => b.kode_buku === kode);
+const findAktif     = (nis,kode) => state.peminjaman.find(p => p.nis===nis && p.kode_buku===kode && !p.tgl_aktual);
+const findAktifKode = kode => state.peminjaman.find(p => p.kode_buku===kode && !p.tgl_aktual);
+const aktifByNIS    = nis  => state.peminjaman.filter(p => p.nis===nis && !p.tgl_aktual);
+
+/* ================================================================
+   TOAST
+================================================================ */
+function toast(msg, type='success') {
+  const ic = { success:'fa-check-circle', error:'fa-times-circle', info:'fa-info-circle' };
+  const el = document.createElement('div');
+  el.className = `toast-item ${type}`;
+  el.innerHTML = `<i class="fas ${ic[type]}"></i> ${msg}`;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(()=>el.remove(),350); }, 3500);
+}
+
+/* ================================================================
+   NAVIGASI
+================================================================ */
+function goTo(pageId, cb) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  const body = document.querySelector(`#${pageId} .page-body`);
+  if (body) body.scrollTop = 0;
+  if (typeof cb === 'function') cb();
+}
+
+/* ================================================================
+   APP STATE
+================================================================ */
+let user         = null;
+let selectedBuku = null;
+let pinjamRecord = null;
+
+/* ================================================================
+   AUTH
+================================================================ */
+function doLogin() {
+  const nis = document.getElementById('inp-nis').value.trim();
+  const err = document.getElementById('login-err');
+  err.style.display = 'none';
+
+  if (!nis) {
+    err.textContent = 'NIS tidak boleh kosong.';
+    err.style.display = 'block';
+    return;
+  }
+
+  const siswa = findSiswa(nis);
+  if (!siswa) {
+    err.textContent = 'NIS tidak ditemukan. Pastikan NIS kamu benar.';
+    err.style.display = 'block';
+    return;
+  }
+
+  user = siswa;
+  // Update semua navbar
+  ['nb','np','nk'].forEach(pfx => {
+    document.getElementById(`${pfx}-nama`).textContent = siswa.nama;
+    document.getElementById(`${pfx}-nis`).textContent  = siswa.nis;
+  });
+  document.getElementById('dash-nama').textContent = siswa.nama.split(' ')[0];
+
+  goTo('page-dashboard', renderAktif);
+  toast(`Selamat datang, ${siswa.nama}! 👋`, 'success');
+}
+
+function doLogout() {
+  user = null; selectedBuku = null; pinjamRecord = null;
+  document.getElementById('inp-nis').value = '';
+  document.getElementById('login-err').style.display = 'none';
+  goTo('page-login');
+  toast('Kamu berhasil keluar.', 'info');
+}
+
+/* ================================================================
+   DASHBOARD
+================================================================ */
+function renderAktif() {
+  const wrap = document.getElementById('aktif-wrap');
+  const list = aktifByNIS(user.nis);
+
+  if (!list.length) {
+    wrap.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><p>Kamu belum memiliki peminjaman aktif.</p></div>`;
+    return;
+  }
+
+  let html = `<div style="overflow-x:auto;"><table class="book-table">
+    <thead><tr><th>Kode</th><th>Judul</th><th>Tgl Pinjam</th><th>Batas Kembali</th><th>Status</th></tr></thead><tbody>`;
+
+  list.forEach(p => {
+    const buku  = findBuku(p.kode_buku);
+    const telat = selisih(p.tgl_kembali, today());
+    const badge = telat > 0
+      ? `<span class="stock-badge late">Terlambat ${telat} hari</span>`
+      : `<span class="stock-badge ok">Tepat waktu</span>`;
+    html += `<tr>
+      <td><code>${p.kode_buku}</code></td>
+      <td>${buku ? buku.judul : p.kode_buku}</td>
+      <td>${fmt(p.tgl_pinjam)}</td>
+      <td>${fmt(p.tgl_kembali)}</td>
+      <td>${badge}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  wrap.innerHTML = html;
+}
+
+function bukaPinjam()  { goTo('page-pinjam',  renderTabelBuku);   }
+function bukaKembali() { goTo('page-kembali', resetFormKembali);  }
+function kembaliDash() { goTo('page-dashboard', renderAktif);     }
+
+/* ================================================================
+   MEMINJAM
+================================================================ */
+function renderTabelBuku() {
+  let html = '';
+  state.buku.forEach(b => {
+    const badge = b.stok > 0
+      ? `<span class="stock-badge ok">${b.stok} tersedia</span>`
+      : `<span class="stock-badge empty">Habis</span>`;
+    const btn = b.stok > 0
+      ? `<button class="btn-pinjam" onclick="bukaPinjamModal('${b.kode_buku}')"><i class="fas fa-plus" style="margin-right:.3rem;"></i>Pinjam</button>`
+      : `<button class="btn-pinjam" disabled>Tidak tersedia</button>`;
+    html += `<tr><td><code>${b.kode_buku}</code></td><td>${b.judul}</td><td>${badge}</td><td>${btn}</td></tr>`;
+  });
+  document.getElementById('tbody-buku').innerHTML = html;
+}
+
+function bukaPinjamModal(kode) {
+  const buku = findBuku(kode);
+  if (!buku || buku.stok === 0) { toast('Stok buku sudah habis!', 'error'); return; }
+  selectedBuku = buku;
+  const tp = today(), tk = tambahHari(tp, 7);
+  document.getElementById('m-judul').textContent   = buku.judul;
+  document.getElementById('m-kode').textContent    = `Kode: ${buku.kode_buku}`;
+  document.getElementById('m-tanggal').textContent = `Pinjam: ${fmt(tp)} → Batas kembali: ${fmt(tk)}`;
+  document.getElementById('modal-confirm').classList.add('show');
+}
+
+function tutupModal() {
+  document.getElementById('modal-confirm').classList.remove('show');
+  selectedBuku = null;
+}
+
+function konfirmasiPinjam() {
+  if (!selectedBuku) return;
+  const buku = findBuku(selectedBuku.kode_buku);
+  if (!buku || buku.stok === 0) { toast('Stok habis!', 'error'); tutupModal(); return; }
+  if (findAktif(user.nis, buku.kode_buku)) {
+    toast('Kamu sudah meminjam buku ini dan belum mengembalikannya!', 'error');
+    tutupModal(); return;
+  }
+  const tp = today(), tk = tambahHari(tp, 7);
+  state.peminjaman.push({ id: genId(), nis: user.nis, kode_buku: buku.kode_buku, tgl_pinjam: tp, tgl_kembali: tk, tgl_aktual: null });
+  buku.stok--;
+  tutupModal();
+  renderTabelBuku();
+  toast(`Berhasil meminjam "${buku.judul}"! Kembalikan sebelum ${fmt(tk)}.`, 'success');
+}
+
+/* ================================================================
+   MENGEMBALIKAN
+================================================================ */
+function resetFormKembali() {
+  document.getElementById('inp-kode').value = '';
+  document.getElementById('result-card').className = 'result-card';
+  pinjamRecord = null;
+}
+
+function cariPeminjaman() {
+  const kode = document.getElementById('inp-kode').value.trim().toUpperCase();
+  if (!kode) { toast('Kode buku tidak boleh kosong!', 'error'); return; }
+
+  const p = findAktifKode(kode);
+  if (!p) {
+    toast('Data peminjaman aktif untuk kode tersebut tidak ditemukan.', 'error');
+    document.getElementById('result-card').className = 'result-card';
+    return;
+  }
+
+  const siswa  = findSiswa(p.nis);
+  const buku   = findBuku(p.kode_buku);
+  const aktual = today();
+  const telat  = selisih(p.tgl_kembali, aktual);
+  const denda  = telat > 0 ? telat * 100 : 0;
+
+  document.getElementById('r-nama').textContent       = siswa ? siswa.nama : p.nis;
+  document.getElementById('r-nis').textContent        = p.nis;
+  document.getElementById('r-judul').textContent      = buku ? buku.judul : p.kode_buku;
+  document.getElementById('r-tgl-pinjam').textContent = fmt(p.tgl_pinjam);
+  document.getElementById('r-tgl-batas').textContent  = fmt(p.tgl_kembali);
+  document.getElementById('r-tgl-aktual').textContent = fmt(aktual);
+
+  const card = document.getElementById('result-card');
+  if (telat > 0) {
+    document.getElementById('r-terlambat').textContent = `${telat} hari`;
+    document.getElementById('r-terlambat').style.color = 'var(--red)';
+    document.getElementById('r-denda').innerHTML = `<span class="fine-amount">${rp(denda)}</span>`;
+    card.className = 'result-card show fine';
+  } else {
+    document.getElementById('r-terlambat').textContent = 'Tidak terlambat';
+    document.getElementById('r-terlambat').style.color = 'var(--green)';
+    document.getElementById('r-denda').innerHTML = `<span class="no-fine">Gratis (Rp 0)</span>`;
+    card.className = 'result-card show good';
+  }
+
+  pinjamRecord = p;
+}
+
+function konfirmasiKembali() {
+  if (!pinjamRecord) return;
+  pinjamRecord.tgl_aktual = today();
+  const buku = findBuku(pinjamRecord.kode_buku);
+  if (buku) buku.stok++;
+  toast(`Buku "${buku ? buku.judul : pinjamRecord.kode_buku}" berhasil dikembalikan!`, 'success');
+  resetFormKembali();
+}
+</script>
+</body>
+</html>
